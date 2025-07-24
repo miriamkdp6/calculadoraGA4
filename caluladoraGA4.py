@@ -21,68 +21,56 @@ def format_currency(value):
 
 def calculate_ga4_cost(events):
     """
-    Calcula o custo do GA4 360 e determina o NÍVEL DE REFERÊNCIA para o cálculo,
-    conforme a lógica de "nível diretamente anterior".
+    Calcula o custo do GA4 360 e determina o NÍVEL DE REFERÊNCIA para o cálculo.
     """
     if events <= 0:
         return 0, "N/A"
     
-    # Nível A: Custo Fixo
     if events <= 25:
         cost = 15274.50
-        # Para o primeiro nível, ele mesmo é a referência.
         tier_label = "Nível A"
-    # Faixa de eventos do Nível B
     elif events <= 500:
         base_cost = 15274.50
         overage_events = events - 25
         cost = base_cost + (overage_events * 64.31)
-        # O nível de referência é o anterior (A)
         tier_label = "Nível A"
-    # Faixa de eventos do Nível C
     elif events <= 2500:
         base_cost = 45821.75
         overage_events = events - 500
         cost = base_cost + (overage_events * 15.27)
-        # O nível de referência é o anterior (B)
         tier_label = "Nível B"
-    # Faixa de eventos do Nível D
     elif events <= 10000:
         base_cost = 76361.75
         overage_events = events - 2500
         cost = base_cost + (overage_events * 4.07)
-        # O nível de referência é o anterior (C)
         tier_label = "Nível C"
-    # Faixa de eventos do Nível E
     elif events <= 25000:
         base_cost = 106886.75
         overage_events = events - 10000
         cost = base_cost + (overage_events * 3.06)
-        # O nível de referência é o anterior (D)
         tier_label = "Nível D"
-    # Faixa de eventos do Nível F
     else:
         base_cost = 152786.75
         overage_events = events - 25000
         cost = base_cost + (overage_events * 3.06)
-        # O nível de referência é o anterior (E)
         tier_label = "Nível E"
         
     return cost, tier_label
 
 # --- INTERFACE DA APLICAÇÃO ---
 
-st.title("📊 Simulador de Investimento GA4 360")
+st.title("📊 Simulador de Custos do GA4 360")
 st.markdown("""
-Esta ferramenta ajuda a estimar o investimento do Google Analytics 4 360 com base no seu volume de eventos.
+Esta ferramenta ajuda a estimar o custo do Google Analytics 4 360 com base no seu volume de eventos.
 """)
 
 with st.sidebar:
     st.header("⚙️ Insira seus dados")
+    # O valor inicial agora é 0.0, para o campo começar "vazio".
     monthly_events_input = st.number_input(
         label="Volume de eventos mensais (em milhões)",
         min_value=0.0,
-        value=55.0,
+        value=0.0,
         step=10.0,
         help="Informe a quantidade total de eventos que você espera registrar por mês, em milhões."
     )
@@ -96,18 +84,16 @@ if monthly_events_input > 0:
     st.subheader("📈 Sua Estimativa de Custo")
     col1, col2, col3 = st.columns(3)
     with col1:
-        # Texto da métrica ajustado para "Nível de Referência"
         st.metric(label="Nível de Referência", value=reference_tier)
     with col2:
         st.metric(label="Custo Mensal Estimado", value=format_currency(monthly_cost))
     with col3:
         st.metric(label="Custo Anual Estimado", value=format_currency(annual_cost))
 
-    # Texto de informação ajustado para maior clareza
     st.info(f"Para **{monthly_events_input:,.0f} milhões** de eventos, seu custo é calculado usando o **{reference_tier}** como base.".replace(',', '.'))
-
 else:
-    st.warning("Por favor, insira um volume de eventos maior que zero na barra lateral.")
+    # Esta mensagem aparecerá quando a aplicação iniciar, pois o valor será 0.
+    st.warning("Por favor, insira um volume de eventos maior que zero na barra lateral para calcular.")
 
 with st.expander("Clique para ver os detalhes do cálculo"):
     st.markdown("""
