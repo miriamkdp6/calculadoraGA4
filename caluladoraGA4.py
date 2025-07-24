@@ -12,7 +12,7 @@ st.set_page_config(
 # --- FUNÇÕES DE CÁLCULO ---
 
 def format_currency(value):
-    """Formata um número como moeda brasileira (R$)."""
+    """Formata um número como moeda (R$)."""
     try:
         # Tenta definir a localidade para português do Brasil
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -21,34 +21,50 @@ def format_currency(value):
         # Fallback caso a localidade não esteja disponível
         return f"R$ {value:,.2f}"
 
-def calculate_ga4_cost(monthly_events_in_millions):
+def calculate_ga4_cost(events):
     """
-    Calcula o custo do GA4 360 com base no volume de eventos mensais.
-    A lógica é baseada na tabela de preços de 2025.
+    Calcula o custo do GA4 360 com base no volume de eventos mensais,
+    usando a lógica de custo base + valor por excedente.
     """
-    if monthly_events_in_millions <= 0:
+    if events <= 0:
         return 0, "N/A"
+    
+    # Nível A: Custo Fixo
+    if events <= 25:
+        cost = 15274.50
+        tier = "Nível A"
+    # Nível B
+    elif events <= 500:
+        base_cost = 15274.50  # Custo total do Nível A
+        overage_events = events - 25
+        cost = base_cost + (overage_events * 64.31)
+        tier = "Nível B"
+    # Nível C
+    elif events <= 2500:
+        base_cost = 45821.75  # Custo total do Nível B
+        overage_events = events - 500
+        cost = base_cost + (overage_events * 15.27)
+        tier = "Nível C"
+    # Nível D
+    elif events <= 10000:
+        base_cost = 76361.75  # Custo total do Nível C
+        overage_events = events - 2500
+        cost = base_cost + (overage_events * 4.07)
+        tier = "Nível D"
+    # Nível E
+    elif events <= 25000:
+        base_cost = 106886.75  # Custo total do Nível D
+        overage_events = events - 10000
+        cost = base_cost + (overage_events * 3.06)
+        tier = "Nível E"
+    # Nível F
+    else:
+        base_cost = 152786.75  # Custo total do Nível E
+        overage_events = events - 25000
+        cost = base_cost + (overage_events * 3.06)
+        tier = "Nível F"
         
-    # Tabela de preços para 2025 (baseada na sua planilha)
-    # Para os níveis A-E, o valor é fixo dentro da faixa.
-    # Para o nível F, o cálculo é diferente.
-    if monthly_events_in_millions <= 25:
-        return 15274.50, "Nível A"
-    elif monthly_events_in_millions <= 500:
-        return 45821.75, "Nível B"
-    elif monthly_events_in_millions <= 2500:
-        return 76361.75, "Nível C"
-    elif monthly_events_in_millions <= 10000:
-        return 106886.75, "Nível D"
-    elif monthly_events_in_millions <= 25000:
-        return 152786.75, "Nível E"
-    else:  # Acima de 25.000 milhões de eventos
-        # Custo do tier anterior (E) + custo variável do excedente
-        base_cost_tier_e = 152786.75
-        overage_events = monthly_events_in_millions - 25000
-        overage_cost = overage_events * 3.06  # Custo por milhão excedente
-        total_cost = base_cost_tier_e + overage_cost
-        return total_cost, "Nível F"
+    return cost, tier
 
 # --- INTERFACE DA APLICAÇÃO ---
 
@@ -56,19 +72,19 @@ def calculate_ga4_cost(monthly_events_in_millions):
 st.title("📊 Simulador de Custos do GA4 360")
 st.markdown("""
 Esta ferramenta ajuda a estimar o custo do Google Analytics 4 360 com base no seu volume de eventos.
-A simulação utiliza a **tabela de preços de 2025** fornecida.
+A simulação utiliza a **tabela de preços de 2025** e a lógica de **custo marginal**.
 """)
 
 # --- BARRA LATERAL (SIDEBAR) PARA INPUTS ---
 with st.sidebar:
     st.header("⚙️ Insira seus dados")
     
-    # Usamos o valor da planilha (500M) como padrão
+    # Usamos 55 como exemplo para testar a nova lógica
     monthly_events_input = st.number_input(
         label="Volume de eventos mensais (em milhões)",
         min_value=0.0,
-        value=500.0,
-        step=50.0,
+        value=55.0, # Valor sugerido pelo usuário para teste
+        step=10.0,
         help="Informe a quantidade total de eventos que você espera registrar por mês, em milhões."
     )
 
@@ -96,27 +112,24 @@ else:
     st.warning("Por favor, insira um volume de eventos maior que zero na barra lateral.")
 
 
-# --- DETALHES DA TABELA DE PREÇOS ---
-with st.expander("Clique para ver a Tabela de Preços de 2025"):
+# --- DETALHES DA TABELA DE PREÇOS (ATUALIZADA) ---
+with st.expander("Clique para ver os detalhes do cálculo"):
     st.markdown("""
-    A tabela abaixo detalha as faixas de preço usadas para o cálculo. 
-    Para os níveis de A a E, o valor mensal é fixo. Para o nível F, o cálculo é baseado no excedente de eventos.
+    O cálculo é feito com base no custo total do nível anterior mais um valor variável para os eventos excedentes.
     """)
     
-    # Criando um DataFrame para exibir a tabela de forma organizada
+    # DataFrame com a lógica de cálculo correta e explícita
     price_data = {
         "Nível": ["A", "B", "C", "D", "E", "F"],
-        "Faixa de Eventos (Milhões)": [
-            "0 - 25", "26 - 500", "501 - 2.500", "2.501 - 10.000",
-            "10.001 - 25.000", "> 25.000"
-        ],
-        "Valor Fixo Mensal": [
-            format_currency(15274.50), format_currency(45821.75), format_currency(76361.75),
-            format_currency(106886.75), format_currency(152786.75), "Variável"
-        ],
-        "Cálculo": [
-            "Valor Fixo", "Valor Fixo", "Valor Fixo", "Valor Fixo", "Valor Fixo",
-            "Base do Nível E + R$ 3,06 por milhão excedente"
+        "Faixa (Milhões)": ["0-25", "25-500", "500-2.500", "2.500-10.000", "10.000-25.000", "> 25.000"],
+        "Custo por Milhão Excedente": ["-", format_currency(64.31), format_currency(15.27), format_currency(4.07), format_currency(3.06), format_currency(3.06)],
+        "Cálculo do Custo Mensal": [
+            "Valor Fixo de R$ 15.274,50",
+            "R$ 15.274,50 + (Eventos - 25M) * R$ 64,31",
+            "R$ 45.821,75 + (Eventos - 500M) * R$ 15,27",
+            "R$ 76.361,75 + (Eventos - 2.500M) * R$ 4,07",
+            "R$ 106.886,75 + (Eventos - 10.000M) * R$ 3,06",
+            "R$ 152.786,75 + (Eventos - 25.000M) * R$ 3,06"
         ]
     }
     price_df = pd.DataFrame(price_data)
