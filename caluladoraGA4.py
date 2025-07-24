@@ -14,17 +14,15 @@ st.set_page_config(
 def format_currency(value):
     """Formata um número como moeda (R$)."""
     try:
-        # Tenta definir a localidade para português do Brasil
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
         return locale.currency(value, grouping=True, symbol=True)
     except locale.Error:
-        # Fallback caso a localidade não esteja disponível
         return f"R$ {value:,.2f}"
 
 def calculate_ga4_cost(events):
     """
-    Calcula o custo do GA4 360 com base no volume de eventos mensais,
-    usando a lógica de custo base + valor por excedente.
+    Calcula o custo do GA4 360 e determina o NÍVEL DE REFERÊNCIA para o cálculo,
+    conforme a lógica de "nível diretamente anterior".
     """
     if events <= 0:
         return 0, "N/A"
@@ -32,93 +30,91 @@ def calculate_ga4_cost(events):
     # Nível A: Custo Fixo
     if events <= 25:
         cost = 15274.50
-        tier = "Nível A"
-    # Nível B
+        # Para o primeiro nível, ele mesmo é a referência.
+        tier_label = "Nível A"
+    # Faixa de eventos do Nível B
     elif events <= 500:
-        base_cost = 15274.50  # Custo total do Nível A
+        base_cost = 15274.50
         overage_events = events - 25
         cost = base_cost + (overage_events * 64.31)
-        tier = "Nível B"
-    # Nível C
+        # O nível de referência é o anterior (A)
+        tier_label = "Nível A"
+    # Faixa de eventos do Nível C
     elif events <= 2500:
-        base_cost = 45821.75  # Custo total do Nível B
+        base_cost = 45821.75
         overage_events = events - 500
         cost = base_cost + (overage_events * 15.27)
-        tier = "Nível C"
-    # Nível D
+        # O nível de referência é o anterior (B)
+        tier_label = "Nível B"
+    # Faixa de eventos do Nível D
     elif events <= 10000:
-        base_cost = 76361.75  # Custo total do Nível C
+        base_cost = 76361.75
         overage_events = events - 2500
         cost = base_cost + (overage_events * 4.07)
-        tier = "Nível D"
-    # Nível E
+        # O nível de referência é o anterior (C)
+        tier_label = "Nível C"
+    # Faixa de eventos do Nível E
     elif events <= 25000:
-        base_cost = 106886.75  # Custo total do Nível D
+        base_cost = 106886.75
         overage_events = events - 10000
         cost = base_cost + (overage_events * 3.06)
-        tier = "Nível E"
-    # Nível F
+        # O nível de referência é o anterior (D)
+        tier_label = "Nível D"
+    # Faixa de eventos do Nível F
     else:
-        base_cost = 152786.75  # Custo total do Nível E
+        base_cost = 152786.75
         overage_events = events - 25000
         cost = base_cost + (overage_events * 3.06)
-        tier = "Nível F"
+        # O nível de referência é o anterior (E)
+        tier_label = "Nível E"
         
-    return cost, tier
+    return cost, tier_label
 
 # --- INTERFACE DA APLICAÇÃO ---
 
-# Título e introdução
-st.title("📊 Simulador de Custos do GA4 360")
+st.title("📊 Simulador de Investimento GA4 360")
 st.markdown("""
-Esta ferramenta ajuda a estimar o custo do Google Analytics 4 360 com base no seu volume de eventos.
-A simulação utiliza a **tabela de preços de 2025** e a lógica de **custo marginal**.
+Esta ferramenta ajuda a estimar o investimento do Google Analytics 4 360 com base no seu volume de eventos.
 """)
 
-# --- BARRA LATERAL (SIDEBAR) PARA INPUTS ---
 with st.sidebar:
     st.header("⚙️ Insira seus dados")
-    
-    # Usamos 55 como exemplo para testar a nova lógica
     monthly_events_input = st.number_input(
         label="Volume de eventos mensais (em milhões)",
         min_value=0.0,
-        value=55.0, # Valor sugerido pelo usuário para teste
+        value=55.0,
         step=10.0,
         help="Informe a quantidade total de eventos que você espera registrar por mês, em milhões."
     )
 
-# --- PAINEL PRINCIPAL PARA RESULTADOS ---
 st.divider()
 
 if monthly_events_input > 0:
-    # Cálculo dos custos
-    monthly_cost, price_tier = calculate_ga4_cost(monthly_events_input)
+    monthly_cost, reference_tier = calculate_ga4_cost(monthly_events_input)
     annual_cost = monthly_cost * 12
 
-    # Exibição dos resultados com st.metric para destaque
     st.subheader("📈 Sua Estimativa de Custo")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric(label="Seu Nível de Preço", value=price_tier)
+        # Texto da métrica ajustado para "Nível de Referência"
+        st.metric(label="Nível de Referência", value=reference_tier)
     with col2:
         st.metric(label="Custo Mensal Estimado", value=format_currency(monthly_cost))
     with col3:
         st.metric(label="Custo Anual Estimado", value=format_currency(annual_cost))
 
-    st.info(f"Com um volume de **{monthly_events_input:,.0f} milhões** de eventos por mês, sua empresa se enquadra no **{price_tier}**.".replace(',', '.'))
+    # Texto de informação ajustado para maior clareza
+    st.info(f"Para **{monthly_events_input:,.0f} milhões** de eventos, seu custo é calculado usando o **{reference_tier}** como base.".replace(',', '.'))
 
 else:
     st.warning("Por favor, insira um volume de eventos maior que zero na barra lateral.")
 
-
-# --- DETALHES DA TABELA DE PREÇOS (ATUALIZADA) ---
 with st.expander("Clique para ver os detalhes do cálculo"):
     st.markdown("""
     O cálculo é feito com base no custo total do nível anterior mais um valor variável para os eventos excedentes.
+    O **Nível de Referência** indica qual faixa de preço foi usada como base para o seu cálculo.
     """)
     
-    # DataFrame com a lógica de cálculo correta e explícita
     price_data = {
         "Nível": ["A", "B", "C", "D", "E", "F"],
         "Faixa (Milhões)": ["0-25", "25-500", "500-2.500", "2.500-10.000", "10.000-25.000", "> 25.000"],
@@ -135,6 +131,5 @@ with st.expander("Clique para ver os detalhes do cálculo"):
     price_df = pd.DataFrame(price_data)
     st.dataframe(price_df, use_container_width=True, hide_index=True)
 
-# Rodapé
 st.divider()
 st.caption("Esta é uma ferramenta de simulação. Os valores são estimativas e devem ser confirmados com seu representante de vendas.")
