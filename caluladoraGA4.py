@@ -4,7 +4,7 @@ import locale
 
 # --- CONFIGURAÇÕES DA PÁGINA ---
 st.set_page_config(
-    page_title="Simulador de Custos GA4 360",
+    page_title="Simulador de Investimento GA4 360",
     page_icon="📊",
     layout="centered"
 )
@@ -21,7 +21,7 @@ def format_currency(value):
 
 def calculate_ga4_cost(events):
     """
-    Calcula o custo do GA4 360 e determina o NÍVEL DE REFERÊNCIA para o cálculo.
+    Calcula o investimento no GA4 360 e determina o NÍVEL DE REFERÊNCIA para o cálculo.
     """
     if events <= 0:
         return 0, "N/A"
@@ -61,7 +61,7 @@ def calculate_ga4_cost(events):
 
 st.title("📊 Simulador de Custos do GA4 360")
 st.markdown("""
-Esta ferramenta ajuda a estimar o custo do Google Analytics 4 360 com base no seu volume de eventos.
+Esta ferramenta ajuda a estimar o investimento em Google Analytics 4 360 com base no seu volume de eventos.
 """)
 
 with st.sidebar:
@@ -104,8 +104,8 @@ with st.expander("Clique para ver os detalhes do cálculo"):
     price_data = {
         "Nível": ["A", "B", "C", "D", "E", "F"],
         "Faixa (Milhões)": ["0-25", "25-500", "500-2.500", "2.500-10.000", "10.000-25.000", "> 25.000"],
-        "Custo por Milhão Excedente": ["-", format_currency(64.31), format_currency(15.27), format_currency(4.07), format_currency(3.06), format_currency(3.06)],
-        "Cálculo do Custo Mensal": [
+        "Valor por Milhão Excedente": ["-", format_currency(64.31), format_currency(15.27), format_currency(4.07), format_currency(3.06), format_currency(3.06)],
+        "Cálculo do Investimento Mensal": [
             "Valor Fixo de R$ 15.274,50",
             "R$ 15.274,50 + (Eventos - 25M) * R$ 64,31",
             "R$ 45.821,75 + (Eventos - 500M) * R$ 15,27",
