@@ -81,23 +81,23 @@ if monthly_events_input > 0:
     monthly_cost, reference_tier = calculate_ga4_cost(monthly_events_input)
     annual_cost = monthly_cost * 12
 
-    st.subheader("📈 Sua Estimativa de Custo")
+    st.subheader("📈 Sua Estimativa de Investimento")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric(label="Nível de Referência", value=reference_tier)
     with col2:
-        st.metric(label="Custo Mensal Estimado", value=format_currency(monthly_cost))
+        st.metric(label="Valor Mensal Estimado", value=format_currency(monthly_cost))
     with col3:
-        st.metric(label="Custo Anual Estimado", value=format_currency(annual_cost))
+        st.metric(label="Valor Anual Estimado", value=format_currency(annual_cost))
 
-    st.info(f"Para **{monthly_events_input:,.0f} milhões** de eventos, seu custo é calculado usando o **{reference_tier}** como base.".replace(',', '.'))
+    st.info(f"Para **{monthly_events_input:,.0f} milhões** de eventos, seu investimento é calculado usando o **{reference_tier}** como base.".replace(',', '.'))
 else:
     # Esta mensagem aparecerá quando a aplicação iniciar, pois o valor será 0.
     st.warning("Por favor, insira um volume de eventos maior que zero na barra lateral para calcular.")
 
 with st.expander("Clique para ver os detalhes do cálculo"):
     st.markdown("""
-    O cálculo é feito com base no custo total do nível anterior mais um valor variável para os eventos excedentes.
+    O cálculo é feito com base no investimento total do nível anterior mais um valor variável para os eventos excedentes.
     O **Nível de Referência** indica qual faixa de preço foi usada como base para o seu cálculo.
     """)
     
