@@ -59,7 +59,7 @@ def calculate_ga4_cost(events):
 
 # --- INTERFACE DA APLICAÇÃO ---
 
-st.title("📊 Simulador de Custos do GA4 360")
+st.title("📊 Simulador de Investimento do GA4 360")
 st.markdown("""
 Esta ferramenta ajuda a estimar o investimento em Google Analytics 4 360 com base no seu volume de eventos.
 """)
